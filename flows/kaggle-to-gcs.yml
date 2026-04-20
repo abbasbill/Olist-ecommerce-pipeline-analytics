@@ -1,0 +1,59 @@
+id: kaggle_to_gcs_
+namespace: dev
+
+inputs:
+  - id: force_clean
+    type: BOOL
+    defaults: false
+
+tasks:
+  - id: clean_gcs_if_forced
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ inputs.force_clean }}"
+    then:
+      - id: delete_existing_files
+        type: io.kestra.plugin.gcp.gcs.DeleteList
+        from: "gs://olist-bucket-484923/olist_data/"
+        serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+        projectId: "de-project-484923"
+
+  - id: check_gcs_files
+    type: io.kestra.plugin.gcp.gcs.List
+    from: "gs://olist-bucket-484923/olist_data/"
+    serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+    projectId: "de-project-484923"
+
+  - id: process_data
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.check_gcs_files.blobs | length == 0 }}"
+    then:
+      - id: download_and_unzip
+        type: io.kestra.plugin.scripts.shell.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: ghcr.io/astral-sh/uv:debian-slim
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        commands:
+          - apt-get update -qq && apt-get install -y -qq unzip > /dev/null
+          - uv tool run kaggle datasets download -d olistbr/brazilian-ecommerce
+          - unzip -q brazilian-ecommerce.zip
+        outputFiles:
+          - "*.csv"
+
+      - id: upload_files
+        type: io.kestra.plugin.core.flow.ForEach
+        concurrencyLimit: 3
+        values: "{{ outputs.download_and_unzip.outputFiles | keys }}"
+        tasks:
+          - id: gcs_upload
+            type: io.kestra.plugin.gcp.gcs.Upload
+            from: "{{ outputs.download_and_unzip.outputFiles[taskrun.value] }}"
+            to: "gs://olist-bucket-484923/olist_data/{{ taskrun.value }}"
+            serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+            projectId: "de-project-484923"
+errors:
+      - id: purge_files
+        type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+        description: Cleans up Kestra storage, If you'd like to explore Kestra outputs, disable it.
+        disabled: false

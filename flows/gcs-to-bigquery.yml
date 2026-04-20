@@ -1,0 +1,84 @@
+id: olist_gcs_to_bigquery_dlt
+namespace: dev
+
+# Reuse the same inputs as your previous flow (optional)
+inputs:
+  - id: force_clean
+    type: BOOLEAN
+    defaults: false
+
+tasks:
+  # 1. Optional: Clean GCS if force_clean = true (from your original flow)
+  - id: clean_gcs_if_forced
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ inputs.force_clean }}"
+    then:
+      - id: delete_existing_files
+        type: io.kestra.plugin.gcp.gcs.DeleteList
+        from: "gs://olist-bucket-484923/olist_data/"
+        serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+        projectId: "de-project-484923"
+
+  # 2. Check if files exist in GCS
+  - id: check_gcs_files
+    type: io.kestra.plugin.gcp.gcs.List
+    from: "gs://olist-bucket-484923/olist_data/"
+    serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+    projectId: "de-project-484923"
+
+  # 3. Load from GCS → BigQuery using dlt (only if files exist)
+  - id: load_to_bigquery
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.check_gcs_files.blobs | length > 0 }}"
+    then:
+      - id: run_dlt_pipeline
+        type: io.kestra.plugin.dlt.Run
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: ghcr.io/kestra-io/dlt:latest   # Official dlt image for Kestra
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"  # For GCS + BigQuery auth
+        beforeCommands:
+          - pip install "dlt[bigquery,gcs]"   # Install dlt with BigQuery + GCS filesystem support
+        script: |
+          import dlt
+          from dlt.sources.filesystem import filesystem
+
+          # Define the dlt pipeline
+          pipeline = dlt.pipeline(
+              pipeline_name="olist_brazilian_ecommerce",
+              destination="bigquery",
+              dataset_name="olist_raw",          # Change this to your preferred BigQuery dataset
+              full_refresh=False,                # Set True for full reload (drops tables)
+              dev_mode=False
+          )
+
+          # Source: all CSV files from GCS bucket (recursive if needed)
+          bucket_url = "gs://olist-bucket-484923/olist_data/"
+          source = filesystem(
+              bucket_url=bucket_url,
+              file_glob="**/*.csv"               # Loads all CSVs in the folder
+          )
+
+          # Optional: you can add incremental loading or specific table naming
+          # For Olist, files are typically named like: olist_orders_dataset.csv, olist_order_items_dataset.csv, etc.
+          # dlt will create tables based on filename (without .csv) by default
+
+          # Run the load
+          load_info = pipeline.run(
+              source,
+              write_disposition="append",
+              loader_file_format="parquet",      # Recommended for BigQuery performance
+              table_name_formatter=lambda name: name.replace(".csv", "").replace("-", "_")  # Clean table names
+          )
+
+          print(load_info)
+          # Optional: print schema or loaded tables
+          print(pipeline.last_trace)
+
+  # Optional: Error handling / cleanup
+errors:
+  - id: purge_files
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+    description: Cleans up Kestra storage after execution.
+    disabled: false
