@@ -1,4 +1,4 @@
-# ecommerce-olist-analytics-pipeline
+# ecommerce-olist-analytics-pipeline (In progress . . .)
 End-to-End Batch Data Engineering Pipeline on GCP – Overview, Architecture Plan &amp; Data Flow
 
 ## Prerequisites
@@ -77,10 +77,8 @@ A step-by-step walkthrough to create a GCP service account with BigQuery Admin, 
 1. Click **Add Key** → **Create new key**.
 2. In the dialog, ensure **JSON** is selected as the key type (recommended over P12).
 3. Click **Create**. The key file will **automatically download** to your machine.
-4. Rename the file to something descriptive (e.g. `my-project-sa-key.json`) and move it to a secure location.
+4. Rename the file to (e.g. `gcp-credentials.json`) and move it into the ./keys/ folder in the root directory of the project.
 5. The file contains your private key. **Do not commit it to version control.**
-
-> ⚠️ **Warning:** This is the only time you can download this key. If lost, you must delete it and generate a new one. Store it securely — treat it like a password.
 
 ---
 
@@ -120,6 +118,27 @@ creds = service_account.Credentials.from_service_account_file("key.json")
 - Rotate keys regularly and delete unused ones.
 - For GCP-hosted workloads, prefer Workload Identity over key files.
 
+---
+
+## Quick Setup for Reproducibility
+
+To quickly replicate this setup across environments:
+
+```bash
+# 1. Place your GCP service account JSON key in the keys/ folder
+mv ~/Downloads/gcp-credentials.json ./keys/  # replace Downloads with the downloaded location of the file on your pc
+
+# 2. Set the environment variable
+export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/keys/gcp-credentials.json"
+
+# 3. Verify authentication
+gcloud auth activate-service-account --key-file=./keys/gcp-credentials.json
+gcloud config set project <YOUR_PROJECT_ID>
+```
+
+**Result:** Your GCP credentials are now available to all services (Terraform, Python, etc.) in this project.
+
+---
 
 2. BigQuery credentials
     - Project ID
@@ -128,7 +147,8 @@ creds = service_account.Credentials.from_service_account_file("key.json")
     
     >Learn more about obtaining BigQuery credentials in `dlt`'s [documentation](https://dlthub.com/docs/dlt-ecosystem/destinations/bigquery).
 
-## TERRAFORM Setup Guide
+
+### TERRAFORM Setup Guide
 # GCP Infrastructure Provisioning with Terraform & Service Account
 
 > **GCS Raw Data Bucket | Terraform State Bucket | BigQuery Dataset**
@@ -139,7 +159,7 @@ creds = service_account.Credentials.from_service_account_file("key.json")
 
 This guide walks you through using the GCP service account you created to provision the following infrastructure using Terraform:
 
-- A GCS bucket for raw CSV data ingestion (`olist-bucket-484923`)
+- A GCS bucket to store raw CSV data (`olist-bucket-484923`)
 - A GCS bucket dedicated to storing Terraform remote state (`terraform-state-484923`)
 - A BigQuery dataset for creating tables from GCS data (`olist_dataset_484923`)
 
@@ -151,9 +171,9 @@ This guide walks you through using the GCP service account you created to provis
 
 Ensure the following tools and files are ready before starting:
 
-- **Terraform** installed (v1.0+) — https://developer.hashicorp.com/terraform/install
+- **Terraform** installed — https://developer.hashicorp.com/terraform/install
 - **Google Cloud SDK** (`gcloud`) installed and authenticated
-- Your **service account JSON key file** downloaded (e.g. `my-project-sa-key.json`)
+- Your **service account JSON key file** downloaded (As instructed previously)
 - The three `.tf` files from your project: `main.tf`, `variables.tf`, `backend.tf`
 
 > **Tip:** Your service account must have BigQuery Admin, Storage Admin, and Storage Object Admin roles assigned.
@@ -187,24 +207,22 @@ gcloud storage buckets create gs://terraform-state-484923 \
   --location=US
 ```
 
-> **Note:** The bucket name `terraform-state-484923` must match exactly what is in your `backend.tf` file. Do not change it unless you update both places.
+> **Note:** The bucket name `terraform-state-484923` must match exactly what is in the `backend.tf` file. Do not change it unless you update both places.
 
 ---
 
-## Step 2 — Set up your project file structure
+## Step 2 — file structure
 
-> *Organise the three Terraform configuration files*
-
-Create a project directory and place all three Terraform files inside it:
+> *Terraform configuration files*
 
 ```
-my-terraform-project/
+terraform/
   ├── main.tf          # GCS raw bucket + BigQuery dataset resources
   ├── variables.tf    # All configurable variables
   └── backend.tf      # Remote state configuration
 ```
 
-Your three files should contain exactly the following:
+The three files should contain exactly the following:
 
 ### main.tf
 
@@ -307,7 +325,7 @@ Terraform uses the Google provider which automatically detects the `GOOGLE_APPLI
 ### Linux / macOS
 
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/my-project-sa-key.json"
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/gcp-credentials.json"
 
 # Verify it is set
 echo $GOOGLE_APPLICATION_CREDENTIALS
@@ -358,7 +376,7 @@ Navigate into your project directory and run `terraform init`. This will:
 - Verify authentication using your service account credentials
 
 ```bash
-cd my-terraform-project
+cd terraform
 
 terraform init
 ```
@@ -501,57 +519,147 @@ terraform destroy
 - Never commit your JSON key file to Git or any public repository.
 - Set `GOOGLE_APPLICATION_CREDENTIALS` per session or in your shell profile — never hardcode it in `.tf` files.
 
+### Kestra Workflow Setup Guide
 
-
-2. **Create an .env File**: Within your repository, create an ``.env`` file, copy and paste your secret keys
- To securely store credentials in base64 format. Prefix each secret with 'SECRET_' by executing the `encode-secret.sh bash script` in order for Kestra's [`secret()`](https://kestra.io/docs/developer-guide/variables/function/secret) function to work. The file should look like this: 
+2. **Create a .env File**: Within your repository, create a `.env` or rename the .env.example file to .env and update the content with your credentials:
 
     ```env
-    SECRET_BIGQUERY_PROJECT_ID=someSecretValueInBase64
-    SECRET_BIGQUERY_PRIVATE_KEY=someSecretValueInBase64
-    SECRET_BIGQUERY_CLIENT_EMAIL=someSecretValueInBase64
-
+    GOOGLE_PROJECT_ID=de-project-484923
+    GCP_REGION="us-central1"
+    GEMINI_API_KEY=<your-gemini-api-key-optional>
     ```
 
-   >The base64 format is required because Kestra mandates it.
-  
-    Find out more about managing secrets in Kestra [here](https://kestra.io/docs/developer-guide/secrets).
+    Save this file in the root directory of the project.
 
-3. **Download Docker Desktop**: As recommended by Kestra, download and install Docker Desktop.
+3. **Download Docker Desktop**: As recommended by Kestra, download and install Docker Desktop from https://www.docker.com/products/docker-desktop.
 
-4. **Download Docker Compose File**: Verify that Docker is active and download the Docker Compose file using the following command:
-   ```bash
-    curl -o docker-compose.yml \
-    https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml
+4. **Run the encode-secret.sh Script**: The script automatically base64-encodes your credentials for Kestra's [`secret()`](https://kestra.io/docs/developer-guide/variables/function/secret) function.
+
+    ```bash
+    # Make the script executable
+    chmod +x encode-secret.sh
+    
+    # Run the encoding script
+    ./encode-secret.sh
     ```
-    *
-5. **Configure Docker Compose File**: Modify your Docker Compose file to include the ``.env`` file:
+
+    **What it does:**
+    - Reads `keys/gcp-credentials.json` and `.env`
+    - Base64-encodes all environment variables with `SECRET_` prefix
+    - Creates `.env_encoded` with all secrets
+    - Appends the encoded GCP credentials as `SECRET_GOOGLE_APPLICATION_CREDENTIALS`
+
+    **Output:**
+    ```
+    Generated files:
+       - .env_encoded (SECRET_ prefixed env vars + GCP credentials)
+       - .credentials_encoded (base64 GCP credentials)
+    ```
+
+    > **Security:** Add `.env` and `.env_encoded` to `.gitignore` — never commit secrets to version control.
+
+5. **Configure Docker Compose File**: Verify your `docker-compose.yml` includes the `.env_encoded` file:
 
     ```yaml
     kestra:
-        image: kestra/kestra:develop-full
-        env_file:
-            - .env
-    ``` 
-
-6. **Enable Auto-Restart in Docker Compose**: Add ``restart: always`` to the `postgres` and `kestra` services in your `docker-compose.yml`. This ensures they automatically restart after a system reboot:
-
-    ```yaml
-    postgres:
-        image: postgres
-        restart: always
+      image: kestra/kestra:v1.1
+      restart: always
+      env_file:
+        - .env_encoded
+      # ... rest of configuration
     ```
 
+    Ensure the kestra service has these volumes mounted for workflow execution:
     ```yaml
-    kestra:
-        image: kestra/kestra:latest-full
-        restart: always
+    volumes:
+      - kestra-data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+      - ./flows:/app/flows
+      - ./terraform:/app/terraform
     ```
-7. **Start Kestra Server**: Run the following command:
-   ```bash
+
+6. **Start Kestra and PostgreSQL**: With Docker Desktop running, start the Kestra stack:
+
+    ```bash
+    # Start both kestra and postgres services in the background
     docker compose up -d
+    
+    # Verify services are running
+    docker compose ps
     ```
-8. **Access Kestra UI**: Launch http://localhost:8080/ to open the Kestra UI.
+
+    Expected output:
+    ```
+    NAME         STATUS                  PORTS
+    postgres     Up (healthy)            5432/tcp
+    kestra       Up                      18080->8080/tcp, 8081->8081/tcp
+    ```
+
+    > **Tip:** Kestra may take 30-60 seconds to fully initialize. Check logs with `docker compose logs -f kestra`.
+
+7. **Access Kestra UI**: Open your browser and navigate to:
+
+    ```
+    http://localhost:18080
+    ```
+
+    > **Note:** The port is 18080 (not 8080) per the docker-compose.yml configuration.
+
+8. **Deploy Workflows to Kestra**: Copy your workflow files to the Kestra container:
+
+    ```bash
+    # Option A: Workflows are automatically synced from ./flows volume
+    # Just ensure your YAML flow files exist in the flows/ directory:
+    ls -la flows/
+    ```
+
+    Expected structure:
+    ```
+    flows/
+    ├── kaggle-to-gcs.yml
+    └── gcs-to-bigquery.yml
+    ```
+
+    The workflows will appear in Kestra UI under **Flows** once the volume sync detects them.
+
+9. **Import Flows in Kestra UI** (if not auto-synced):
+
+    1. In Kestra UI, click **Flows** in the left sidebar.
+    2. Click **Create** → **New flow**.
+    3. Paste the contents of your `.yml` file from `flows/` folder.
+    4. Click **Save**.
+    5. The flow is now ready to execute or schedule.
+
+    **Example:** For `kaggle-to-gcs.yml`:
+    - Triggers data download from Kaggle
+    - Uploads raw CSV files to your GCS bucket
+    - Outputs logs to Kestra's execution history
+
+10. **Verify Secrets are Available**: In Kestra UI, click **Admin** → **Secrets** to confirm all `SECRET_*` variables are loaded from `.env_encoded`:
+
+    ```
+    SECRET_GCP_PROJECT_ID="your-project-id-base64"
+    SECRET_GCP_REGION="your-region-base64"
+    SECRET_GEMINI_API_KEY="your-api-key-base64"
+    SECRET_GOOGLE_APPLICATION_CREDENTIALS ✓
+    ```
+
+    Your workflows can now reference these secrets via `{{ secret('SECRET_BIGQUERY_PROJECT_ID') }}`.
+
+---
+
+## Kestra Workflow Execution Summary
+
+| Step | Action | Command/Location |
+|---|---|---|
+| 1 | Create `.env` with credentials | Create file in root directory |
+| 2 | Encode secrets | `./encode-secret.sh` |
+| 3 | Start Kestra stack | `docker compose up -d` |
+| 4 | Open Kestra UI | http://localhost:18080 |
+| 5 | Deploy workflows | YAML files in `flows/` (auto-synced) |
+| 6 | Execute workflow | Click **Executions** in Kestra UI |
+| 7 | Monitor logs | View in Kestra UI or `docker compose logs` |
 
 
 ## REFERENCES
