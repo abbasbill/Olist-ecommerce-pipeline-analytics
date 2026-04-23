@@ -1,6 +1,6 @@
 variable "project" {
   description = "Project"
-  default     = "de-project-484923"
+  default     = "ecommerce-4939"
 }
 
 variable "region" {
@@ -18,13 +18,13 @@ variable "location" {
 variable "gcs_bucket_name" {
   description = "My Storage Bucket Name"
   #Update the below to a unique bucket name
-  default = "olist-bucket-484923"
+  default = "olist-bucket-4939"
 }
 
 variable "bq_dataset_name" {
   description = "My BigQuery Dataset Name"
   #Update the below to what you want your dataset to be called
-  default = "olist_dataset_484923"
+  default = "olist_dataset_4939"
 }
 
 variable "gcs_storage_class" {

@@ -1,4 +1,4 @@
-id: kaggle_to_gcs_
+id: kaggle_to_gcs
 namespace: dev
 
 inputs:
@@ -13,15 +13,15 @@ tasks:
     then:
       - id: delete_existing_files
         type: io.kestra.plugin.gcp.gcs.DeleteList
-        from: "gs://olist-bucket-484923/olist_data/"
+        from: "gs://olist-bucket-4939/olist_data/"
         serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
-        projectId: "de-project-484923"
+        projectId: "ecommerce-4939"
 
   - id: check_gcs_files
     type: io.kestra.plugin.gcp.gcs.List
-    from: "gs://olist-bucket-484923/olist_data/"
+    from: "gs://olist-bucket-4939/olist_data/"
     serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
-    projectId: "de-project-484923"
+    projectId: "ecommerce-4939"
 
   - id: process_data
     type: io.kestra.plugin.core.flow.If
@@ -49,9 +49,9 @@ tasks:
           - id: gcs_upload
             type: io.kestra.plugin.gcp.gcs.Upload
             from: "{{ outputs.download_and_unzip.outputFiles[taskrun.value] }}"
-            to: "gs://olist-bucket-484923/olist_data/{{ taskrun.value }}"
+            to: "gs://olist-bucket-4939/olist_data/{{ taskrun.value }}"
             serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
-            projectId: "de-project-484923"
+            projectId: "ecommerce-4939"
 errors:
       - id: purge_files
         type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles

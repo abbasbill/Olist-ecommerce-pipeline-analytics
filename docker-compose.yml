@@ -34,8 +34,8 @@ services:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/kestra-wd:/tmp/kestra-wd
-      - /home/sxzquare/ecommerce-data-analytics/flows:/app/flows
-      - /home/sxzquare/ecommerce-data-analytics/terraform:/app/terraform
+      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/app/flows
+      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/app/terraform
     environment:
       KESTRA_CONFIGURATION: |
         datasources:

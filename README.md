@@ -159,9 +159,9 @@ gcloud config set project <YOUR_PROJECT_ID>
 
 This guide walks you through using the GCP service account you created to provision the following infrastructure using Terraform:
 
-- A GCS bucket to store raw CSV data (`olist-bucket-484923`)
-- A GCS bucket dedicated to storing Terraform remote state (`terraform-state-484923`)
-- A BigQuery dataset for creating tables from GCS data (`olist_dataset_484923`)
+- A GCS bucket to store raw CSV data (`olist-bucket-4939`)
+- A GCS bucket dedicated to storing Terraform remote state (`terraform-state-4939`)
+- A BigQuery dataset for creating tables from GCS data (`olist_dataset_4939`)
 
 > **Tip:** Make sure you have completed the service account setup and downloaded your JSON key file before proceeding.
 
@@ -184,13 +184,13 @@ Ensure the following tools and files are ready before starting:
 
 > *This bucket must exist before running `terraform init`*
 
-The Terraform state bucket (`terraform-state-484923`) must be created **before** running any Terraform commands, because it is referenced in the backend configuration that Terraform needs during initialisation.
+The Terraform state bucket (`terraform-state-4939`) must be created **before** running any Terraform commands, because it is referenced in the backend configuration that Terraform needs during initialisation.
 
 ### Option A — Using the GCP Console
 
 1. Go to `console.cloud.google.com` and navigate to **Cloud Storage > Buckets**.
 2. Click **Create Bucket**.
-3. Set the name to exactly: `terraform-state-484923` (must match `backend.tf`).
+3. Set the name to exactly: `terraform-state-4939` (must match `backend.tf`).
 4. Choose a region (e.g. `US` or `us-central1` to match your `variables.tf`).
 5. Leave other settings as default and click **Create**.
 
@@ -202,12 +202,12 @@ gcloud auth activate-service-account \
   --key-file=/path/to/my-project-sa-key.json
 
 # Create the Terraform state bucket
-gcloud storage buckets create gs://terraform-state-484923 \
-  --project=de-project-484923 \
+gcloud storage buckets create gs://terraform-state-4939 \
+  --project=ecommerce-4939 \
   --location=US
 ```
 
-> **Note:** The bucket name `terraform-state-484923` must match exactly what is in the `backend.tf` file. Do not change it unless you update both places.
+> **Note:** The bucket name `terraform-state-4939` must match exactly what is in the `backend.tf` file. Do not change it unless you update both places.
 
 ---
 
@@ -241,7 +241,7 @@ provider "google" {
   region  = var.region
 }
 
-resource "google_storage_bucket" "raw" {
+resource "google_storage_bucket" "olist_bucket" {
   name     = var.gcs_bucket_name
   location = var.location
 
@@ -264,7 +264,7 @@ resource "google_storage_bucket" "raw" {
   force_destroy = true
 }
 
-resource "google_bigquery_dataset" "staging" {
+resource "google_bigquery_dataset" "olist_dataset" {
   dataset_id = var.bq_dataset_name
 }
 ```
@@ -274,7 +274,7 @@ resource "google_bigquery_dataset" "staging" {
 ```terraform
 variable "project" {
   description = "Project"
-  default     = "de-project-484923"
+  default     = "ecommerce-4939"
 }
 
 variable "region" {
@@ -289,12 +289,12 @@ variable "location" {
 
 variable "gcs_bucket_name" {
   description = "My Storage Bucket Name"
-  default     = "olist-bucket-484923"
+  default     = "olist-bucket-4939"
 }
 
 variable "bq_dataset_name" {
   description = "My BigQuery Dataset Name"
-  default     = "olist_dataset_484923"
+  default     = "olist_dataset_4939"
 }
 
 variable "gcs_storage_class" {
@@ -308,7 +308,7 @@ variable "gcs_storage_class" {
 ```terraform
 terraform {
   backend "gcs" {
-    bucket = "terraform-state-484923"
+    bucket = "terraform-state-4939"
     prefix = "terraform/state"
   }
 }
@@ -354,11 +354,11 @@ The variables below are preconfigured in `variables.tf`. Review each one and upd
 
 | Variable | Default Value | What to change |
 |---|---|---|
-| `project` | `de-project-484923` | Your GCP Project ID |
+| `project` | `ecommerce-4939` | Your GCP Project ID |
 | `region` | `us-central1` | Your preferred GCP region |
 | `location` | `US` | Multi-region or single region |
-| `gcs_bucket_name` | `olist-bucket-484923` | Must be globally unique |
-| `bq_dataset_name` | `olist_dataset_484923` | Your BigQuery dataset name |
+| `gcs_bucket_name` | `olist-bucket-4939` | Must be globally unique |
+| `bq_dataset_name` | `olist_dataset_4939` | Your BigQuery dataset name |
 | `gcs_storage_class` | `STANDARD` | `STANDARD`, `NEARLINE`, or `COLDLINE` |
 
 > **Note:** GCS bucket names are globally unique across all GCP projects. If the default name is already taken, change it to something unique.
@@ -410,8 +410,8 @@ terraform plan
 
 Terraform will show a plan with 2 resources to be created:
 
-- `google_storage_bucket.raw` — the `olist-bucket-484923` GCS bucket
-- `google_bigquery_dataset.staging` — the `olist_dataset_484923` BigQuery dataset
+- `google_storage_bucket.olist_bucket` — the `olist-bucket-4939` GCS bucket
+- `google_bigquery_dataset.olist_dataset` — the `olist_dataset_4939` BigQuery dataset
 
 ```
 Plan: 2 to add, 0 to change, 0 to destroy.
@@ -444,15 +444,15 @@ Do you want to perform these actions?
 Expected output on success:
 
 ```
-google_storage_bucket.raw: Creating...
-google_bigquery_dataset.staging: Creating...
-google_storage_bucket.raw: Creation complete after 2s
-google_bigquery_dataset.staging: Creation complete after 3s
+google_storage_bucket.olist_bucket: Creating...
+google_bigquery_dataset.olist_dataset: Creating...
+google_storage_bucket.olist_bucket: Creation complete after 2s
+google_bigquery_dataset.olist_dataset: Creation complete after 3s
 
 Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
 ```
 
-> **Tip:** The Terraform state file is automatically saved to `gs://terraform-state-484923/terraform/state` after a successful apply.
+> **Tip:** The Terraform state file is automatically saved to `gs://terraform-state-4939/terraform/state` after a successful apply.
 
 ---
 
@@ -465,19 +465,19 @@ After a successful apply, verify each resource in the GCP Console:
 ### GCS Raw Data Bucket
 
 1. Go to **Cloud Storage > Buckets**.
-2. Confirm `olist-bucket-484923` appears in the list.
+2. Confirm `olist-bucket-4939` appears in the list.
 3. Click into it and verify versioning is enabled under the **Configuration** tab.
 
 ### GCS Terraform State Bucket
 
-1. In **Cloud Storage > Buckets**, confirm `terraform-state-484923` exists.
+1. In **Cloud Storage > Buckets**, confirm `terraform-state-4939` exists.
 2. Click into it and navigate to `terraform/state/` — you should see the state file.
 
 ### BigQuery Dataset
 
 1. Go to **BigQuery** in the GCP Console.
-2. In the left panel, expand your project (`de-project-484923`).
-3. Confirm `olist_dataset_484923` appears as a dataset.
+2. In the left panel, expand your project (`ecommerce-4939`).
+3. Confirm `olist_dataset_4939` appears as a dataset.
 
 > **Tip:** All three resources should now be visible in the GCP Console. The dataset will be empty until you create tables inside it.
 
@@ -498,7 +498,7 @@ To destroy all Terraform-managed resources (GCS raw bucket + BigQuery dataset) w
 terraform destroy
 ```
 
-> **Warning:** This will permanently delete the GCS raw bucket and BigQuery dataset including all data. The Terraform state bucket (`terraform-state-484923`) is not managed by Terraform and must be deleted manually if needed.
+> **Warning:** This will permanently delete the GCS raw bucket and BigQuery dataset including all data. The Terraform state bucket (`terraform-state-4939`) is not managed by Terraform and must be deleted manually if needed.
 
 ---
 
@@ -506,13 +506,13 @@ terraform destroy
 
 | Step | Action | Key detail |
 |---|---|---|
-| 1 | Create state bucket manually | `terraform-state-484923` must exist before `terraform init` |
+| 1 | Create state bucket manually | `terraform-state-4939` must exist before `terraform init` |
 | 2 | Set up `.tf` file structure | `main.tf`, `variables.tf`, `backend.tf` in one directory |
 | 3 | Set `GOOGLE_APPLICATION_CREDENTIALS` | Points Terraform to your service account JSON key |
 | 4 | Review `variables.tf` | Update project ID, bucket name, region as needed |
 | 5 | Run `terraform init` | Downloads provider, connects to GCS backend |
 | 6 | Run `terraform plan` | Previews 2 resources: GCS bucket + BQ dataset |
-| 7 | Run `terraform apply` | Creates `olist-bucket-484923` and `olist_dataset_484923` |
+| 7 | Run `terraform apply` | Creates `olist-bucket-4939` and `olist_dataset_4939` |
 | 8 | Verify in GCP Console | Check Cloud Storage and BigQuery in the Console |
 
 **Security reminders:**

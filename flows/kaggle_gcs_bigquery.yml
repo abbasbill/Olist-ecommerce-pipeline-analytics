@@ -1,4 +1,4 @@
-id: olist_gcs_to_bigquery_dlt
+id: kaggle_gcs_bigquery
 namespace: dev
 
 inputs:
@@ -7,7 +7,7 @@ inputs:
     defaults: false
 
 tasks:
-  # 1. Optional: Clean GCS if requested
+  # 1. Optional: Clean GCS if force_clean = true
   - id: clean_gcs_if_forced
     type: io.kestra.plugin.core.flow.If
     condition: "{{ inputs.force_clean }}"
@@ -18,14 +18,45 @@ tasks:
         serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
         projectId: "ecommerce-4939"
 
-  # 2. Check if files exist in GCS
+  # 2. Check if files exist in GCS (single check at start)
   - id: check_gcs_files
     type: io.kestra.plugin.gcp.gcs.List
     from: "gs://olist-bucket-4939/olist_data/"
     serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
     projectId: "ecommerce-4939"
 
-  # 3. Load from GCS → BigQuery using dlt
+  # 3. Download from Kaggle and Upload to GCS (only if GCS is empty)
+  - id: process_data
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.check_gcs_files.blobs | length == 0 }}"
+    then:
+      - id: download_and_unzip
+        type: io.kestra.plugin.scripts.shell.Commands
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+        containerImage: ghcr.io/astral-sh/uv:debian-slim
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        commands:
+          - apt-get update -qq && apt-get install -y -qq unzip > /dev/null
+          - uv tool run kaggle datasets download -d olistbr/brazilian-ecommerce
+          - unzip -q brazilian-ecommerce.zip
+        outputFiles:
+          - "*.csv"
+
+      - id: upload_files
+        type: io.kestra.plugin.core.flow.ForEach
+        concurrencyLimit: 3
+        values: "{{ outputs.download_and_unzip.outputFiles | keys }}"
+        tasks:
+          - id: gcs_upload
+            type: io.kestra.plugin.gcp.gcs.Upload
+            from: "{{ outputs.download_and_unzip.outputFiles[taskrun.value] }}"
+            to: "gs://olist-bucket-4939/olist_data/{{ taskrun.value }}"
+            serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+            projectId: "ecommerce-4939"
+
+  # 4. Load from GCS → BigQuery using dlt (only if files exist in GCS)
   - id: load_to_bigquery
     type: io.kestra.plugin.core.flow.If
     condition: "{{ outputs.check_gcs_files.blobs | length > 0 }}"
@@ -79,3 +110,10 @@ tasks:
 
           print("Load completed successfully!")
           print(load_info)
+
+  # Optional: Error handling / cleanup
+errors:
+  - id: purge_files
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+    description: Cleans up Kestra storage after execution.
+    disabled: false

@@ -14,7 +14,7 @@ provider "google" {
 
 
 
-resource "google_storage_bucket" "raw" {
+resource "google_storage_bucket" "olist_bucket" {
   name     = var.gcs_bucket_name
   location = var.location
 
@@ -39,6 +39,6 @@ resource "google_storage_bucket" "raw" {
 }
 
 
-resource "google_bigquery_dataset" "staging" {
+resource "google_bigquery_dataset" "olist_dataset" {
   dataset_id = var.bq_dataset_name
 }
