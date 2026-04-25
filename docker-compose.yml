@@ -34,9 +34,9 @@ services:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/kestra-wd:/tmp/kestra-wd
-      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/app/flows
-      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/app/terraform
-      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/app/olist_analytics
+      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/flows
+      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/terraform
+      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/olist_analytics
     environment:
       KESTRA_CONFIGURATION: |
         datasources:
@@ -56,6 +56,10 @@ services:
               - type: io.kestra.plugin.scripts.runner.docker.Docker
                 values:
                   volumeEnabled: true
+                  volumes:
+                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/olist_analytics
+                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/flows
+                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/terraform
           repository:
             type: postgres
           storage:
@@ -75,8 +79,9 @@ services:
           url: http://localhost:8080/
           local-files:
             allowed-paths:
-              - /app/flows
-              - /app/terraform
+              - /flows
+              - /terraform
+              - /olist_analytics
     ports:
       - "18080:8080"
       - "8081:8081"

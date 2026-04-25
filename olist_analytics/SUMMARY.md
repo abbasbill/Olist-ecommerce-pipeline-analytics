@@ -1,17 +1,13 @@
-# 🎯 OLIST dbt PROJECT - DEPLOYMENT SUMMARY
+# OLIST dbt PROJECT - DEPLOYMENT SUMMARY
 
-**Status**: ✅ FULLY CONFIGURED & READY FOR IMMEDIATE DEPLOYMENT
-
----
-
-## 📦 What Has Been Created
+## What Has Been Created
 
 ### Complete dbt Project Structure
 ```
 olist_analytics/
 ├── Configuration (5 files)
-│   ├── dbt_project.yml              ✅ Pre-configured for ecommerce-4939
-│   ├── profiles.yml                 ✅ Points to olist_dataset_4939
+│   ├── dbt_project.yml              Pre-configured for ecommerce-4939
+│   ├── profiles.yml                 Points to olist_dataset_4939
 │   ├── packages.yml                 (dbt dependencies)
 │   ├── requirements.txt              (Python packages)
 │   └── .gitignore                   (Security: no secrets)
@@ -51,16 +47,16 @@ flows/
 
 ---
 
-## ⚙️ Configuration Applied to Your Environment
+## Configuration Applied to Your Environment
 
-### ✅ Pre-Configured Values
+### Pre-Configured Values
 
 | Setting | Value | Location |
 |---------|-------|----------|
 | **GCP Project ID** | `ecommerce-4939` | profiles.yml, dbt_project.yml |
 | **BigQuery Dataset** | `olist_dataset_4939` | profiles.yml, sources.yml |
 | **dbt Target** | `prod` | profiles.yml |
-| **Kestra Project Path** | `/app/olist_analytics` | olist_dbt_transformations.yml |
+| **Kestra Project Path** | `/olist_analytics` | olist_dbt_transformations.yml |
 | **Credentials Path** | `/secrets/gcp-sa.json` | profiles.yml (Kestra mounts) |
 | **Notification Email** | `sxzquare@gmail.com` | olist_dbt_transformations.yml |
 | **dbt Threads** | 4 (dev), 8 (prod) | dbt_project.yml |
@@ -68,7 +64,7 @@ flows/
 
 ---
 
-## 🎯 What the Pipeline Does
+## What the Pipeline Does
 
 ### Step-by-Step Execution
 
@@ -111,7 +107,7 @@ Total Runtime: 5-10 minutes
 
 ---
 
-## 🚀 Quick Start (5 Steps)
+## Quick Start (5 Steps)
 
 ### Step 1: Ensure Kestra is Running
 ```bash
@@ -122,7 +118,7 @@ docker compose ps
 ### Step 2: Mount dbt Project in Docker Compose
 **In docker-compose.yml**, under `kestra: → volumes:`, add:
 ```yaml
-- /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/app/olist_analytics
+- /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/olist_analytics
 ```
 Then restart:
 ```bash
@@ -147,7 +143,7 @@ SELECT COUNT(*) FROM `ecommerce-4939.olist_dataset_4939.fct_sales`;
 
 ---
 
-## 📊 Analytics Ready
+## Analytics Ready
 
 Once deployed, your data is ready for Looker Studio:
 
@@ -165,7 +161,7 @@ See [LOOKER_STUDIO_GUIDE.md](./LOOKER_STUDIO_GUIDE.md) for detailed setup.
 
 ---
 
-## 📋 Files You Can Reference
+## Files You Can Reference
 
 ### For Immediate Deployment
 - **START HERE**: [DEPLOYMENT_READY.md](./DEPLOYMENT_READY.md) - Full deployment walkthrough
@@ -183,7 +179,7 @@ See [LOOKER_STUDIO_GUIDE.md](./LOOKER_STUDIO_GUIDE.md) for detailed setup.
 
 ---
 
-## ✅ Pre-Deployment Checklist
+## Pre-Deployment Checklist
 
 Before clicking Execute in Kestra:
 
@@ -198,24 +194,24 @@ Before clicking Execute in Kestra:
 
 ---
 
-## 🎯 Key Files Updated for Your Setup
+## Key Files Updated for Your Setup
 
 | File | Changes Made |
 |------|--------------|
 | `profiles.yml` | Updated project to `ecommerce-4939`, dataset to `olist_dataset_4939` |
 | `dbt_project.yml` | Updated variables with correct project/dataset names |
 | `models/sources.yml` | Changed schema from `raw` to `olist_dataset_4939` |
-| `flows/olist_dbt_transformations.yml` | Updated paths to `/app/olist_analytics`, email to sxzquare@gmail.com |
+| `flows/olist_dbt_transformations.yml` | Updated paths to `/olist_analytics`, email to sxzquare@gmail.com |
 
 All other files are production-ready and require no changes.
 
 ---
 
-## 🔄 How It Works in Kestra
+##  How It Works in Kestra
 
 1. **Kestra mounts volumes** (docker-compose.yml):
-   - `./flows:/app/flows` (Kestra sees your workflow files)
-   - `./olist_analytics:/app/olist_analytics` (Kestra sees dbt project)
+   - `./flows:/flows` (Kestra sees your workflow files)
+   - `./olist_analytics:/olist_analytics` (Kestra sees dbt project)
 
 2. **Workflow executes** (olist_dbt_transformations.yml):
    - Runs dbt CLI commands inside a Docker container
@@ -234,7 +230,7 @@ All other files are production-ready and require no changes.
 
 ---
 
-## 🎊 Success Looks Like
+## Success Looks Like
 
 When deployment succeeds:
 
@@ -249,7 +245,7 @@ When deployment succeeds:
 
 ---
 
-## 🚀 You're Ready!
+## You're Ready!
 
 Everything is configured and ready to go.
 
@@ -261,7 +257,7 @@ Everything is configured and ready to go.
 
 ---
 
-## 📞 Quick Reference
+##  Quick Reference
 
 ### Common Commands (for reference)
 
@@ -292,17 +288,14 @@ bq ls ecommerce-4939.olist_dataset_4939
 
 ---
 
-## 📝 Deployment Information
+##  Deployment Information
 
 - **Project**: Olist E-commerce Analytics Pipeline
 - **dbt Version**: 1.5.3
 - **Target**: BigQuery (ecommerce-4939)
 - **Dataset**: olist_dataset_4939
 - **Orchestrator**: Kestra (local)
-- **Status**: ✅ Ready for Deployment
+- **Status**: Ready for Deployment
 - **Deployment Date**: April 25, 2026
 - **Prepared For**: sxzquare@gmail.com
 
----
-
-**All configuration is complete. You're ready to deploy immediately!** 🚀

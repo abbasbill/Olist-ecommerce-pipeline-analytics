@@ -54,8 +54,8 @@
 
 - [ ] dbt project located at: `/home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics`
 - [ ] Volume mounted in docker-compose.yml:
-  - [ ] `./flows:/app/flows`
-  - [ ] `./olist_analytics:/app/olist_analytics` ← **Make sure this line exists**
+  - [ ] `./flows:/flows`
+  - [ ] `./olist_analytics:/olist_analytics` ← **Make sure this line exists**
 
 ### Configuration Files Updated
 
@@ -63,7 +63,7 @@
 - [ ] `profiles.yml` dataset set to `olist_dataset_4939`
 - [ ] `dbt_project.yml` variables updated with correct project/dataset
 - [ ] `models/sources.yml` points to `olist_dataset_4939` schema
-- [ ] `flows/olist_dbt_transformations.yml` uses `/app/olist_analytics` path
+- [ ] `flows/olist_dbt_transformations.yml` uses `/olist_analytics` path
 
 ---
 
@@ -80,9 +80,9 @@ kestra:
     - kestra-data:/app/storage
     - /var/run/docker.sock:/var/run/docker.sock
     - /tmp/kestra-wd:/tmp/kestra-wd
-    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/app/flows
-    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/app/terraform
-    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/app/olist_analytics  # ← ADD THIS
+    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/flows
+    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/terraform
+    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/olist_analytics  # ← ADD THIS
 ```
 
 ### Step 2: Restart Kestra

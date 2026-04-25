@@ -9,11 +9,11 @@ tasks:
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
     containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
-    projectDir: /app/olist_analytics
+    projectDir: /olist_analytics
     commands:
       - dbt deps
     env:
-      DBT_PROFILES_DIR: /app/olist_analytics
+      DBT_PROFILES_DIR: /olist_analytics
       GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
 
   # Run dbt transformations (staging + marts)
@@ -22,11 +22,11 @@ tasks:
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
     containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
-    projectDir: /app/olist_analytics
+    projectDir: /olist_analytics
     commands:
       - dbt build --select stg_* marts.fct_sales --target prod
     env:
-      DBT_PROFILES_DIR: /app/olist_analytics
+      DBT_PROFILES_DIR: /olist_analytics
       GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
       DBT_THREADS: "4"
     timeout: PT30M
@@ -37,11 +37,11 @@ tasks:
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
     containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
-    projectDir: /app/olist_analytics
+    projectDir: /olist_analytics
     commands:
       - dbt test --select marts.fct_sales --target prod
     env:
-      DBT_PROFILES_DIR: /app/olist_analytics
+      DBT_PROFILES_DIR: /olist_analytics
       GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
 
   # Generate dbt documentation
@@ -50,11 +50,11 @@ tasks:
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
     containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
-    projectDir: /app/olist_analytics
+    projectDir: /olist_analytics
     commands:
       - dbt docs generate
     env:
-      DBT_PROFILES_DIR: /app/olist_analytics
+      DBT_PROFILES_DIR: /olist_analytics
       GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
 
   # Success notification
@@ -96,7 +96,7 @@ variables:
   dbt_target: prod
 
 # Error handling
-onFailure:
+errors:
   - id: failure_notification
     type: io.kestra.plugin.core.log.Log
     message: |
