@@ -617,12 +617,6 @@ terraform destroy
     ls -la flows/
     ```
 
-    Expected structure:
-    ```
-    flows/
-    ├── kaggle-to-gcs.yml
-    └── gcs-to-bigquery.yml
-    ```
 
     The workflows will appear in Kestra UI under **Flows** once the volume sync detects them.
 
