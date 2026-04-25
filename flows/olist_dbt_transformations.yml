@@ -1,0 +1,112 @@
+id: olist_sales_dbt_pipeline
+namespace: olist
+description: Complete Olist ecommerce pipeline with dbt transformations orchestrated by Kestra
+
+tasks:
+  # Install dbt dependencies
+  - id: dbt_deps
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
+    projectDir: /app/olist_analytics
+    commands:
+      - dbt deps
+    env:
+      DBT_PROFILES_DIR: /app/olist_analytics
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+
+  # Run dbt transformations (staging + marts)
+  - id: run_dbt_transformations
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
+    projectDir: /app/olist_analytics
+    commands:
+      - dbt build --select stg_* marts.fct_sales --target prod
+    env:
+      DBT_PROFILES_DIR: /app/olist_analytics
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      DBT_THREADS: "4"
+    timeout: PT30M
+
+  # Run dbt tests
+  - id: run_dbt_tests
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
+    projectDir: /app/olist_analytics
+    commands:
+      - dbt test --select marts.fct_sales --target prod
+    env:
+      DBT_PROFILES_DIR: /app/olist_analytics
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+
+  # Generate dbt documentation
+  - id: generate_dbt_docs
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
+    projectDir: /app/olist_analytics
+    commands:
+      - dbt docs generate
+    env:
+      DBT_PROFILES_DIR: /app/olist_analytics
+      GOOGLE_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+
+  # Success notification
+  - id: success_notification
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      ✅ Olist dbt Pipeline Completed Successfully!
+      
+      Execution ID: {{ execution.id }}
+      Duration: {{ execution.duration }}
+      
+      All transformations and tests completed successfully.
+      
+      Staging tables (views):
+        - stg_orders
+        - stg_order_items
+        - stg_payments
+        - stg_products
+      
+      Marts tables (fact tables):
+        - fct_sales (partitioned by order_month, clustered by category & payment_type)
+      
+      Next steps:
+      1. Connect Looker Studio to BigQuery dataset: olist_dataset_4939
+      2. Create dashboards with fct_sales table
+      3. Check dbt documentation at http://localhost:18080 (if dbt docs serve task added)
+
+# Schedule: Run daily at 2 AM UTC
+triggers:
+  - id: daily_trigger
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * *"
+
+# Global variables
+variables:
+  notification_email: sxzquare@gmail.com
+  gcp_project_id: ecommerce-4939
+  olist_dataset: olist_dataset_4939
+  dbt_target: prod
+
+# Error handling
+onFailure:
+  - id: failure_notification
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      ❌ Olist dbt Pipeline Failed!
+      
+      Execution ID: {{ execution.id }}
+      
+      Check the execution logs above for error details.
+      Common issues:
+      - dbt dependencies not installed (check dbt_deps task)
+      - BigQuery connection issue (check GOOGLE_APPLICATION_CREDENTIALS)
+      - Model syntax error (check dbt compile)
+      - Test failures (check data quality)

@@ -1,0 +1,132 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw Olist ecommerce data loaded from Kaggle dataset in BigQuery
+    database: ecommerce-4939
+    schema: olist_dataset_4939
+    tables:
+      - name: olist_orders_dataset
+        description: Order-level data with timestamps and status
+        columns:
+          - name: order_id
+            description: Unique order identifier
+            tests:
+              - not_null
+              - unique
+          - name: customer_id
+            description: Customer identifier
+          - name: order_status
+            description: Status of the order (e.g., delivered, shipped, cancelled)
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['delivered', 'shipped', 'cancelled', 'processing', 'unavailable', 'invoiced', 'created']
+          - name: order_purchase_timestamp
+            description: When the order was placed
+            tests:
+              - not_null
+          - name: order_approved_at
+            description: When the order was approved for shipping
+          - name: order_delivered_carrier_date
+            description: When the order was handed to carrier
+          - name: order_delivered_customer_date
+            description: When the customer received the order
+          - name: order_estimated_delivery_date
+            description: Estimated delivery date
+
+      - name: olist_order_items_dataset
+        description: Line items within orders with pricing and product details
+        columns:
+          - name: order_id
+            description: Foreign key to orders
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw', 'olist_orders_dataset')
+                  field: order_id
+          - name: order_item_id
+            description: Item sequence number within order
+            tests:
+              - not_null
+          - name: product_id
+            description: Foreign key to products
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw', 'olist_products_dataset')
+                  field: product_id
+          - name: seller_id
+            description: Seller identifier
+          - name: price
+            description: Item price in BRL
+            tests:
+              - not_null
+          - name: freight_value
+            description: Shipping cost for this item in BRL
+          - name: shipping_limit_date
+            description: Delivery deadline
+
+      - name: olist_products_dataset
+        description: Product catalog with category and descriptive metadata
+        columns:
+          - name: product_id
+            description: Unique product identifier
+            tests:
+              - not_null
+              - unique
+          - name: product_category_name
+            description: Product category in Portuguese
+            tests:
+              - not_null
+          - name: product_name_lenght
+            description: Length of product name in characters
+          - name: product_description_lenght
+            description: Length of product description in characters
+          - name: product_photos_qty
+            description: Number of product photos
+          - name: product_weight_g
+            description: Product weight in grams
+          - name: product_length_cm
+            description: Product length in cm
+          - name: product_height_cm
+            description: Product height in cm
+          - name: product_width_cm
+            description: Product width in cm
+
+      - name: olist_order_payments_dataset
+        description: Payment information by order
+        columns:
+          - name: order_id
+            description: Foreign key to orders
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw', 'olist_orders_dataset')
+                  field: order_id
+          - name: payment_sequential
+            description: Payment sequence (order has at least 1 payment)
+          - name: payment_type
+            description: Payment method (credit_card, boleto, debit_card, voucher)
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['credit_card', 'boleto', 'debit_card', 'voucher']
+          - name: payment_installments
+            description: Number of installments (1 = one-time payment)
+          - name: payment_value
+            description: Payment amount in BRL
+            tests:
+              - not_null
+
+      - name: product_category_name_translation
+        description: English translation of Portuguese product categories
+        columns:
+          - name: product_category_name
+            description: Portuguese category name (key)
+            tests:
+              - not_null
+          - name: product_category_name_english
+            description: English translation of category
+            tests:
+              - not_null

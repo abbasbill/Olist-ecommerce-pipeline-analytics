@@ -1,0 +1,3 @@
+dbt-bigquery==1.5.3
+dbt-core==1.5.3
+dbt-utils==1.0.0

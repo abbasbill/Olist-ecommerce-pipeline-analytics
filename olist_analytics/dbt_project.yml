@@ -1,0 +1,53 @@
+
+# Name your project! Project names should be lowercase and use underscores as word separators
+# See documentation: https://docs.getdbt.com/docs/building-a-dbt-project/projects
+
+name: 'olist_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'olist_analytics'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+data-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  olist_analytics:
+    # Config indicated by + and applies to all files under models/example/
+    +materialized: view
+    staging:
+      +materialized: view
+      +schema: stg
+      +tags: ["staging"]
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ["marts", "production"]
+      +partition_by:
+        field: order_month
+        data_type: date
+      +cluster_by: ["product_category_name_english", "payment_type"]
+
+vars:
+  # Default values for variables (can be overridden at runtime)
+  start_date: '2016-01-01'
+  end_date: '2018-12-31'
+  gcp_project_id: 'ecommerce-4939'
+  olist_dataset: 'olist_dataset_4939'
+  orders_table: 'olist_dataset_4939.olist_orders_dataset'
+  order_items_table: 'olist_dataset_4939.olist_order_items_dataset'
+  products_table: 'olist_dataset_4939.olist_products_dataset'
+  payments_table: 'olist_dataset_4939.olist_order_payments_dataset'
+  category_translation_table: 'olist_dataset_4939.product_category_name_translation'
+
+seeds:
+  quote_csv: false
+
+require-dbt-version: [">=1.0.0", "<2.0.0"]

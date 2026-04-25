@@ -1,0 +1,116 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: Staging table for orders with essential order metadata
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Customer identifier
+        tests:
+          - not_null
+      - name: order_status
+        description: Current status of the order
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['delivered', 'shipped', 'cancelled', 'processing', 'unavailable', 'invoiced', 'created']
+      - name: order_purchase_timestamp
+        description: When the order was placed
+        tests:
+          - not_null
+      - name: order_approved_at
+        description: When order was approved by merchant
+      - name: order_delivered_carrier_date
+        description: Date order was handed to carrier
+      - name: order_delivered_customer_date
+        description: Date order was delivered to customer
+      - name: order_estimated_delivery_date
+        description: Estimated delivery date per merchant's calculation
+
+  - name: stg_order_items
+    description: Staging table for order items with pricing information
+    columns:
+      - name: order_id
+        description: Foreign key to orders table
+        tests:
+          - not_null
+      - name: order_item_id
+        description: Sequential item number within the order (starts at 1)
+        tests:
+          - not_null
+      - name: product_id
+        description: Foreign key to products table
+        tests:
+          - not_null
+      - name: seller_id
+        description: Identifier of the seller providing this item
+      - name: price
+        description: Item price in BRL (Brazilian Real)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: freight_value
+        description: Shipping cost for this item in BRL
+      - name: shipping_limit_date
+        description: Deadline for handling by merchant to avoid delay
+
+  - name: stg_payments
+    description: Staging table for payments aggregated by order and payment type
+    columns:
+      - name: order_id
+        description: Foreign key to orders table
+        tests:
+          - not_null
+      - name: payment_type
+        description: Type of payment method (credit_card, boleto, debit_card, voucher)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['credit_card', 'boleto', 'debit_card', 'voucher']
+      - name: total_payment_value
+        description: Aggregated payment amount for this order and payment type
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: total_installments
+        description: Total number of installments (if applicable)
+      - name: payment_count
+        description: Number of separate payment records for this order and type
+
+  - name: stg_products
+    description: Staging table for products with English category translation
+    columns:
+      - name: product_id
+        description: Unique product identifier
+        tests:
+          - not_null
+          - unique
+      - name: product_category_name
+        description: Product category name in Portuguese
+        tests:
+          - not_null
+      - name: product_category_name_english
+        description: English translation of product category
+        tests:
+          - not_null
+      - name: product_name_lenght
+        description: Length of product name in characters
+      - name: product_description_lenght
+        description: Length of product description in characters
+      - name: product_photos_qty
+        description: Number of photos for the product
+      - name: product_weight_g
+        description: Product weight in grams
+      - name: product_length_cm
+        description: Product length in centimeters
+      - name: product_height_cm
+        description: Product height in centimeters
+      - name: product_width_cm
+        description: Product width in centimeters

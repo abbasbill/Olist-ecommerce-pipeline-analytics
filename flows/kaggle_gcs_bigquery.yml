@@ -7,6 +7,11 @@ inputs:
     defaults: false
 
 tasks:
+  - id: add_flow_label
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      flow_type: "data_ingestion"
+
   # 1. Optional: Clean GCS if force_clean = true
   - id: clean_gcs_if_forced
     type: io.kestra.plugin.core.flow.If
@@ -56,10 +61,18 @@ tasks:
             serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
             projectId: "ecommerce-4939"
 
-  # 4. Load from GCS → BigQuery using dlt (only if files exist in GCS)
+  # 4. Re-check GCS after potential upload (covers first-run case where
+  #    check_gcs_files ran before upload and found 0 blobs)
+  - id: recheck_gcs_files
+    type: io.kestra.plugin.gcp.gcs.List
+    from: "gs://olist-bucket-4939/olist_data/"
+    serviceAccount: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+    projectId: "ecommerce-4939"
+
+  # 5. Load from GCS → BigQuery using dlt (one table per CSV file)
   - id: load_to_bigquery
     type: io.kestra.plugin.core.flow.If
-    condition: "{{ outputs.check_gcs_files.blobs | length > 0 }}"
+    condition: "{{ outputs.recheck_gcs_files.blobs | length > 0 }}"
     then:
       - id: run_dlt_pipeline
         type: io.kestra.plugin.dlt.Run
@@ -67,51 +80,73 @@ tasks:
           type: io.kestra.plugin.scripts.runner.docker.Docker
         containerImage: ghcr.io/kestra-io/dlt:latest
         env:
-          # Pass the full service account JSON string — already set in Kestra secrets
-          GCP_APPLICATION_CREDENTIALS: "{{ secret('GCP_APPLICATION_CREDENTIALS') }}"
+          GCP_APPLICATION_CREDENTIALS: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
         beforeCommands:
-          - uv pip install --system --quiet "dlt[bigquery,gcs]"
+          - uv pip install --system --quiet "dlt[bigquery,gcs]" google-cloud-storage google-cloud-bigquery-storage pandas
           - dlt --non-interactive init filesystem bigquery
         script: |
           import os
+          import re
+          import io
+          import json
+          import pandas as pd
           import dlt
           from dlt.sources.credentials import GcpServiceAccountCredentials
-          from dlt.sources.filesystem import filesystem, read_csv
+          from google.cloud import storage
+          from google.oauth2 import service_account
 
-          # Parse the full service account JSON string directly into GcpServiceAccountCredentials
-          # parse_native_representation() accepts the serialized service.json as a string or dict
-          credentials = GcpServiceAccountCredentials()
-          credentials.parse_native_representation(os.environ["GCP_APPLICATION_CREDENTIALS"])
+          # ── Credentials ──
+          sa_info = json.loads(os.environ["GCP_APPLICATION_CREDENTIALS"])
 
-          print("Authenticated as:", credentials.client_email)
-          print("Project:", credentials.project_id)
+          # dlt credential object — used for BigQuery destination
+          dlt_credentials = GcpServiceAccountCredentials()
+          dlt_credentials.parse_native_representation(os.environ["GCP_APPLICATION_CREDENTIALS"])
+          print("Authenticated as:", dlt_credentials.client_email)
+          print("Project:", dlt_credentials.project_id)
 
-          # GCS source with explicit credentials
-          source = filesystem(
-              bucket_url="gs://olist-bucket-4939/olist_data/",
-              file_glob="**/*.csv",
-              credentials=credentials,
-          ) | read_csv()
+          # GCS client — used to list and download each CSV individually
+          gcs_creds = service_account.Credentials.from_service_account_info(sa_info)
+          gcs_client = storage.Client(credentials=gcs_creds, project=sa_info["project_id"])
 
-          # BigQuery destination with the same credentials object
+          # ── Discover CSV files ─
+          bucket_name = "olist-bucket-4939"
+          prefix = "olist_data/"
+          blobs = list(gcs_client.list_blobs(bucket_name, prefix=prefix))
+          csv_blobs = [b for b in blobs if b.name.endswith(".csv")]
+          print(f"Found {len(csv_blobs)} CSV files")
+
+          # ── Build one dlt resource per CSV file ───
+          # Each resource becomes its own BigQuery table named after the file.
+          # e.g. olist_customers_dataset.csv → customers
+          def make_resource(blob):
+              filename = blob.name.split("/")[-1]
+              table_name = re.sub(r"^olist_|_dataset|\.csv$", "", filename)
+
+              @dlt.resource(name=table_name, write_disposition="replace")
+              def _resource():
+                  content = blob.download_as_bytes()
+                  df = pd.read_csv(io.BytesIO(content))
+                  print(f"  → {table_name}: {len(df)} rows | columns: {list(df.columns)}")
+                  yield df.to_dict(orient="records")
+
+              return _resource()
+
+          resources = [make_resource(blob) for blob in csv_blobs]
+
+          # ── Pipeline ─
           pipeline = dlt.pipeline(
               pipeline_name="olist_brazilian_ecommerce",
               destination=dlt.destinations.bigquery(
-                  credentials=credentials,
+                  credentials=dlt_credentials,
               ),
               dataset_name="olist_dataset_4939",
           )
 
-          load_info = pipeline.run(
-              source,
-              loader_file_format="parquet",
-              write_disposition="append",
-          )
+          load_info = pipeline.run(resources)
 
           print("Load completed successfully!")
           print(load_info)
 
-  # Optional: Error handling / cleanup
 errors:
   - id: purge_files
     type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles

@@ -1,4 +1,7 @@
-# ecommerce-olist-analytics-pipeline (In progress . . .)
+### NOTE: This project is still in progress and will be updated viz-a-viz as I push the latest work. . ., Kindy use the latest commit for reviewing this project and .., Thanks!
+
+# ecommerce-olist-analytics-pipeline 
+
 End-to-End Batch Data Engineering Pipeline on GCP – Overview, Architecture Plan &amp; Data Flow
 
 ## Prerequisites
