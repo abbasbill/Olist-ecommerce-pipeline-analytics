@@ -36,6 +36,7 @@ services:
       - /tmp/kestra-wd:/tmp/kestra-wd
       - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/app/flows
       - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/app/terraform
+      - /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/app/olist_analytics
     environment:
       KESTRA_CONFIGURATION: |
         datasources:
