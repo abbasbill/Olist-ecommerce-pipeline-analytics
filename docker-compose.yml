@@ -56,10 +56,7 @@ services:
               - type: io.kestra.plugin.scripts.runner.docker.Docker
                 values:
                   volumeEnabled: true
-                  volumes:
-                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/olist_analytics
-                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/flows
-                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/terraform
+                  networkMode: host
           repository:
             type: postgres
           storage:

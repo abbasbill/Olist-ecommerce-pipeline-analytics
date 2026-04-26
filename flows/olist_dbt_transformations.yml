@@ -1,5 +1,5 @@
 id: olist_sales_dbt_pipeline
-namespace: olist
+namespace: dev
 description: Complete Olist ecommerce pipeline with dbt transformations orchestrated by Kestra
 
 tasks:
