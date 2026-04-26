@@ -57,6 +57,11 @@ services:
                 values:
                   volumeEnabled: true
                   networkMode: host
+                  binds:
+                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/olist_analytics:/olist_analytics:rw
+                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/flows:/flows:ro
+                    - /home/sxzquare/Olist-ecommerce-pipeline-analytics/terraform:/terraform:ro
+                    - /var/run/docker.sock:/var/run/docker.sock:rw
           repository:
             type: postgres
           storage:

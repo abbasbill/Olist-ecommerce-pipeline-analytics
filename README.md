@@ -870,3 +870,6 @@ For issues or questions:
 ## REFERENCES
 - [Configure Secrets in Kestra](https://kestra.io/docs/how-to-guides/secrets)
 - [Secrets in Kestra – Store Sensitive Values Securely](https://kestra.io/docs/concepts/secret)
+- [credentials configuration](https://dlthub.com/docs/general-usage/credentials/complex_types#awscredentials)
+- [Load data from a cloud storage or a file system](https://dlthub.com/docs/tutorial/filesystem)
+- [Free Dataset Downloads to Practice Your Skills](https://mavenanalytics.io/data-playground?order=date_added%2Cdesc&search=Hospital%20Patient%20Records)
