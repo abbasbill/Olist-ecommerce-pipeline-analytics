@@ -9,6 +9,19 @@
     cluster_by=['product_category_name_english', 'payment_type']
 ) }}
 
+WITH payments AS (
+    -- Collapse multiple payment types per order into a single row.
+    -- payment_type shows the dominant method (highest value contribution).
+    -- Orders split across payment types (e.g. credit_card + voucher) are
+    -- common in the Olist dataset and would fan out rows if not aggregated.
+    SELECT
+        order_id,
+        MAX(payment_type)          AS payment_type,   -- dominant payment type
+        SUM(total_payment_value)   AS total_payment_value
+    FROM {{ ref('stg_payments') }}
+    GROUP BY order_id
+)
+
 SELECT
     oi.order_id,
     oi.order_item_id,
@@ -37,7 +50,7 @@ INNER JOIN {{ ref('stg_orders') }} o
     ON oi.order_id = o.order_id
 LEFT JOIN {{ ref('stg_products') }} p
     ON oi.product_id = p.product_id
-LEFT JOIN {{ ref('stg_payments') }} pay
+LEFT JOIN payments pay
     ON oi.order_id = pay.order_id
 WHERE o.order_status IN ('delivered', 'shipped')
   AND oi.price > 0

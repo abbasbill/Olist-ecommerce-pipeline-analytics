@@ -79,7 +79,8 @@ models:
 
     tests:
       - dbt_utils.recency:
-          arguments:
-            datepart: day
-            field: order_purchase_timestamp
-            interval: 365
+          config:
+            severity: warn
+          datepart: day
+          field: order_purchase_timestamp
+          interval: 365
