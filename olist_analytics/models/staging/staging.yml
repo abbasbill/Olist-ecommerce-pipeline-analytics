@@ -19,7 +19,7 @@ models:
           - not_null
           - accepted_values:
               arguments: # Added
-                values: ['delivered', 'shipped', 'cancelled', 'processing', 'unavailable', 'invoiced', 'created']
+                values: ['delivered', 'shipped', 'cancelled', 'canceled', 'approved', 'processing', 'unavailable', 'invoiced', 'created']
       - name: order_purchase_timestamp
         description: When the order was placed
         tests:

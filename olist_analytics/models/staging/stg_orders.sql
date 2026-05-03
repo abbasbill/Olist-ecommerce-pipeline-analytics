@@ -3,7 +3,7 @@
 SELECT
     order_id,
     customer_id,
-    order_status,
+    REPLACE(order_status, 'canceled', 'cancelled')  AS order_status,
     order_purchase_timestamp,
     order_approved_at,
     order_delivered_carrier_date,
