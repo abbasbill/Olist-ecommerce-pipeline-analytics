@@ -1,0 +1,83 @@
+id: olist_sales_dbt
+namespace: prod
+description: Run Olist dbt transformations against BigQuery.
+
+labels:
+  project: olist
+  layer: transformation
+  env: prod
+
+inputs:
+  - id: dbt_target
+    type: SELECT
+    displayName: dbt Target
+    defaults: prod
+    values:
+      - dev
+      - prod
+
+triggers:
+  - id: daily_schedule
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 3 * * *"
+
+tasks:
+  - id: dbt_build
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    containerImage: ghcr.io/kestra-io/dbt-bigquery:latest
+    env:
+      SA_KEY_JSON: "{{ secret('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa_key.json
+    profiles: |
+      olist_analytics:
+        target: "{{ inputs.dbt_target }}"
+        outputs:
+          dev:
+            type: bigquery
+            method: service-account
+            project: ecommerce-4939
+            dataset: olist_dataset_4939_dev
+            keyfile: /tmp/sa_key.json
+            threads: 4
+            timeout_seconds: 300
+            location: US
+            priority: interactive
+            retries: 1
+          prod:
+            type: bigquery
+            method: service-account
+            project: ecommerce-4939
+            dataset: olist_dataset_4939
+            keyfile: /tmp/sa_key.json
+            threads: 8
+            timeout_seconds: 600
+            location: US
+            priority: batch
+            retries: 3
+    beforeCommands:
+      - python3 -c "import os; open('/tmp/sa_key.json','w').write(os.environ['SA_KEY_JSON'])"
+      - git clone --depth 1 --branch main
+          https://github.com/abbasbill/Olist-ecommerce-pipeline-analytics.git
+          /app/olist
+      - dbt deps --project-dir /app/olist/olist_analytics
+    commands:
+      - dbt build
+          --project-dir /app/olist/olist_analytics
+          --select "path:models/staging path:models/marts/fct_sales.sql"
+          --target "{{ inputs.dbt_target }}"
+      - dbt test
+          --project-dir /app/olist/olist_analytics
+          --select "path:models/marts/fct_sales.sql"
+          --target "{{ inputs.dbt_target }}"
+      - dbt docs generate
+          --project-dir /app/olist/olist_analytics
+          --target "{{ inputs.dbt_target }}"
+    timeout: PT30M
+
+errors:
+  - id: notify_on_failure
+    type: io.kestra.plugin.core.log.Log
+    message: "dbt workflow failed — execution: {{ execution.id }}, task: {{ task.id }}"
+    level: ERROR
