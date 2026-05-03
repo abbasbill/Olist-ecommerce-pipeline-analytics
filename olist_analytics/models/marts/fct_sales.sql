@@ -3,7 +3,8 @@
     tags=['marts', 'sales', 'production'],
     partition_by={
         'field': 'order_month',
-        'data_type': 'date'
+        'data_type': 'date',
+        'granularity': 'month'
     },
     cluster_by=['product_category_name_english', 'payment_type']
 ) }}
@@ -12,7 +13,7 @@ SELECT
     oi.order_id,
     oi.order_item_id,
     o.order_purchase_timestamp,
-    DATE_TRUNC(o.order_purchase_timestamp, MONTH) AS order_month,
+    DATE_TRUNC(DATE(o.order_purchase_timestamp), MONTH)  AS order_month,
     o.customer_id,
     o.order_status,
     p.product_id,
@@ -22,7 +23,7 @@ SELECT
     p.product_description_lenght,
     oi.price,
     oi.freight_value,
-    ROUND(oi.price + COALESCE(oi.freight_value, 0), 2) AS revenue,
+    ROUND(oi.price + COALESCE(oi.freight_value, 0), 2)   AS revenue,
     pay.payment_type,
     pay.total_payment_value,
     oi.seller_id,
@@ -30,7 +31,7 @@ SELECT
     o.order_delivered_carrier_date,
     o.order_delivered_customer_date,
     o.order_estimated_delivery_date,
-    CURRENT_TIMESTAMP() AS dbt_updated_at
+    CURRENT_TIMESTAMP()                                  AS dbt_updated_at
 FROM {{ ref('stg_order_items') }} oi
 INNER JOIN {{ ref('stg_orders') }} o
     ON oi.order_id = o.order_id
