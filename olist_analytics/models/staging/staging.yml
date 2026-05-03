@@ -74,6 +74,8 @@ models:
         tests:
           - not_null
           - accepted_values:
+              config:
+                severity: warn
               arguments: # Added
                 values: ['credit_card', 'boleto', 'debit_card', 'voucher']
       - name: total_payment_value

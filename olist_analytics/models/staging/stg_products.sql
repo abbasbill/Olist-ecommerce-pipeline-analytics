@@ -2,8 +2,8 @@
 
 SELECT
     p.product_id,
-    p.product_category_name,
-    COALESCE(t.product_category_name_english, p.product_category_name) AS product_category_name_english,
+    COALESCE(p.product_category_name, 'others')                                              AS product_category_name,
+    COALESCE(t.product_category_name_english, p.product_category_name, 'others')             AS product_category_name_english,
     p.product_name_lenght,
     p.product_description_lenght,
     p.product_photos_qty,
