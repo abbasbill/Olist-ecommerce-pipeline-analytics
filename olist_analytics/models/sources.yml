@@ -6,7 +6,7 @@ sources:
     database: ecommerce-4939
     schema: olist_dataset_4939
     tables:
-      - name: olist_orders_dataset
+      - name: orders
         description: Order-level data with timestamps and status
         columns:
           - name: order_id
@@ -21,7 +21,7 @@ sources:
             tests:
               - not_null
               - accepted_values:
-                  arguments: # Added
+                  arguments:
                     values: ['delivered', 'shipped', 'cancelled', 'processing', 'unavailable', 'invoiced', 'created']
           - name: order_purchase_timestamp
             description: When the order was placed
@@ -36,7 +36,7 @@ sources:
           - name: order_estimated_delivery_date
             description: Estimated delivery date
 
-      - name: olist_order_items_dataset
+      - name: order_items
         description: Line items within orders with pricing and product details
         columns:
           - name: order_id
@@ -44,8 +44,8 @@ sources:
             tests:
               - not_null
               - relationships:
-                  arguments: # Added
-                    to: source('raw', 'olist_orders_dataset')
+                  arguments:
+                    to: source('raw', 'orders')
                     field: order_id
           - name: order_item_id
             description: Item sequence number within order
@@ -56,8 +56,8 @@ sources:
             tests:
               - not_null
               - relationships:
-                  arguments: # Added
-                    to: source('raw', 'olist_products_dataset')
+                  arguments:
+                    to: source('raw', 'products')
                     field: product_id
           - name: seller_id
             description: Seller identifier
@@ -70,7 +70,7 @@ sources:
           - name: shipping_limit_date
             description: Delivery deadline
 
-      - name: olist_products_dataset
+      - name: products
         description: Product catalog with category and descriptive metadata
         columns:
           - name: product_id
@@ -83,7 +83,7 @@ sources:
             tests:
               - not_null
 
-      - name: olist_order_payments_dataset
+      - name: order_payments
         description: Payment information by order
         columns:
           - name: order_id
@@ -91,8 +91,8 @@ sources:
             tests:
               - not_null
               - relationships:
-                  arguments: # Added
-                    to: source('raw', 'olist_orders_dataset')
+                  arguments:
+                    to: source('raw', 'orders')
                     field: order_id
           - name: payment_sequential
             description: Payment sequence (order has at least 1 payment)
@@ -101,7 +101,7 @@ sources:
             tests:
               - not_null
               - accepted_values:
-                  arguments: # Added
+                  arguments:
                     values: ['credit_card', 'boleto', 'debit_card', 'voucher']
           - name: payment_installments
             description: Number of installments (1 = one-time payment)

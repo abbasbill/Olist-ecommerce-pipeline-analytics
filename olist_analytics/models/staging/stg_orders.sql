@@ -9,5 +9,5 @@ SELECT
     order_delivered_carrier_date,
     order_delivered_customer_date,
     order_estimated_delivery_date
-FROM {{ source('raw', 'olist_orders_dataset') }}
+FROM {{ source('raw', 'orders') }}
 WHERE order_purchase_timestamp IS NOT NULL
