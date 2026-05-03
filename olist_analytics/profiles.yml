@@ -5,7 +5,8 @@ olist_analytics:
       type: bigquery
       method: service-account
       project: ecommerce-4939
-      dataset: olist_dataset_4939_dev  # Dev dataset
+      dataset: olist_dataset_4939_dev  # Dev 
+      keyfille: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
       threads: 4
       timeout_seconds: 300
       location: US
@@ -17,6 +18,7 @@ olist_analytics:
       method: service-account
       project: ecommerce-4939
       dataset: olist_dataset_4939  # Production dataset (raw data already loaded)
+      keyfille: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
       threads: 8
       timeout_seconds: 600
       location: US

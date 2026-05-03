@@ -18,7 +18,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['delivered', 'shipped', 'cancelled', 'processing', 'unavailable', 'invoiced', 'created']
+              arguments: # Added
+                values: ['delivered', 'shipped', 'cancelled', 'processing', 'unavailable', 'invoiced', 'created']
       - name: order_purchase_timestamp
         description: When the order was placed
         tests:
@@ -54,7 +55,8 @@ models:
         tests:
           - not_null
           - dbt_utils.accepted_range:
-              min_value: 0
+              arguments: # Added
+                min_value: 0
       - name: freight_value
         description: Shipping cost for this item in BRL
       - name: shipping_limit_date
@@ -72,13 +74,15 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['credit_card', 'boleto', 'debit_card', 'voucher']
+              arguments: # Added
+                values: ['credit_card', 'boleto', 'debit_card', 'voucher']
       - name: total_payment_value
         description: Aggregated payment amount for this order and payment type
         tests:
           - not_null
           - dbt_utils.accepted_range:
-              min_value: 0
+              arguments: # Added
+                min_value: 0
       - name: total_installments
         description: Total number of installments (if applicable)
       - name: payment_count
