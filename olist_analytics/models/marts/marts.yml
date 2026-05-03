@@ -21,13 +21,14 @@ models:
         tests:
           - not_null
           - unique:
-              column_name: "order_id || '-' || order_item_id"
+              arguments:
+                column_name: "order_id || '-' || order_item_id"
       - name: order_purchase_timestamp
         description: When the customer placed the order (UTC)
         tests:
           - not_null
       - name: order_month
-        description: Order date truncated to first day of month (for partitioning/grouping)
+        description: Order date truncated to first day of month
         tests:
           - not_null
       - name: customer_id
@@ -39,7 +40,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['delivered', 'shipped']
+              arguments:
+                values: ['delivered', 'shipped']
       - name: product_id
         description: Foreign key to product
         tests:
@@ -49,46 +51,35 @@ models:
         tests:
           - not_null
       - name: product_category_name_english
-        description: Product category in English (for dashboards)
+        description: Product category in English
         tests:
           - not_null
-      - name: product_name_lenght
-        description: Length of product name string
-      - name: product_description_lenght
-        description: Length of product description string
       - name: price
         description: Item price in BRL (Brazilian Real)
         tests:
           - not_null
           - dbt_utils.accepted_range:
-              min_value: 0
-      - name: freight_value
-        description: Shipping cost for this item in BRL
+              arguments:
+                min_value: 0
       - name: revenue
-        description: Total revenue for this item (price + freight_value), rounded to 2 decimals
+        description: Total revenue for this item
         tests:
           - not_null
           - dbt_utils.accepted_range:
-              min_value: 0
+              arguments:
+                min_value: 0
       - name: payment_type
         description: Primary payment method for this order
       - name: total_payment_value
-        description: Aggregated payment amount by payment type for the order
+        description: Aggregated payment amount by payment type
       - name: seller_id
         description: Seller/merchant identifier
-      - name: order_approved_at
-        description: When seller approved the order for processing
-      - name: order_delivered_carrier_date
-        description: Date item handed to carrier
-      - name: order_delivered_customer_date
-        description: Date item was delivered to customer
-      - name: order_estimated_delivery_date
-        description: Seller's estimated delivery date
       - name: dbt_updated_at
         description: Timestamp when this row was last updated by dbt
 
     tests:
       - dbt_utils.recency:
-          datepart: day
-          field: order_purchase_timestamp
-          interval: 365
+          arguments:
+            datepart: day
+            field: order_purchase_timestamp
+            interval: 365
