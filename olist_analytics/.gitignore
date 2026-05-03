@@ -25,7 +25,7 @@ ENV/
 *~
 
 # Secrets (never commit credentials)
-profiles.yml
+# profiles.yml
 gcp-sa-key.json
 .env
 .env.local

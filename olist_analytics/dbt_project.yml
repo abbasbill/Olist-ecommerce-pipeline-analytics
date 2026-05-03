@@ -10,7 +10,7 @@ profile: 'olist_analytics'
 
 model-paths: ["models"]
 test-paths: ["tests"]
-data-paths: ["seeds"]
+seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 target-path: "target"
@@ -48,6 +48,6 @@ vars:
   category_translation_table: 'olist_dataset_4939.product_category_name_translation'
 
 seeds:
-  quote_csv: false
+  +quote_csv: false
 
 require-dbt-version: [">=1.0.0", "<2.0.0"]

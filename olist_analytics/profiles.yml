@@ -1,0 +1,28 @@
+olist_analytics:
+  target: prod
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: ecommerce-4939
+      dataset: olist_dataset_4939_dev  # Dev dataset
+      threads: 4
+      timeout_seconds: 300
+      location: US
+      priority: interactive
+      retries: 1
+      
+    prod:
+      type: bigquery
+      method: service-account
+      project: ecommerce-4939
+      dataset: olist_dataset_4939  # Production dataset (raw data already loaded)
+      threads: 8
+      timeout_seconds: 600
+      location: US
+      priority: batch
+      retries: 3
+
+# NOTE: For Kestra integration, credentials come from GOOGLE_APPLICATION_CREDENTIALS env var
+# The dbt flow passes this via: env.GOOGLE_APPLICATION_CREDENTIALS = secret('GOOGLE_APPLICATION_CREDENTIALS')
+# dbt-bigquery automatically uses the env var when no keyfile is specified
