@@ -273,5 +273,4 @@ Then create a **Scorecard** for "Average Order Value" by category.
 
 ---
 
-**Last Updated**: April 2026  
-**Dashboard Template Version**: 1.0
+
