@@ -1,7 +1,9 @@
 # ecommerce-olist-analytics-pipeline 
 
-End-to-End Batch Data Engineering Pipeline on GCP – Overview, Architecture Plan &amp; Data Flow
+End-to-End Batch Data Pipeline for an ecommerce online store on GCP – using terraform, dlt, dbt, kestra, bigquery, gcs   
 
+Overview, Architecture Plan &amp; Data Flow
+![dashboard](unnamed.png)
 ## Prerequisites
 
 1. GCP Service Account
