@@ -865,8 +865,7 @@ For issues or questions:
 | 7 | Monitor logs | View in Kestra UI or `docker compose logs` |
 
 ## DASHBOARD (LOOKUP STUDIO)
-[Final Dashboard](https://datastudio.google.com/embed/reporting/4264c807-7ac3-45e6-bcc5-fb50a3ec3c05/page/5W9wF)
-<iframe width="600" height="450" src="https://datastudio.google.com/embed/reporting/4264c807-7ac3-45e6-bcc5-fb50a3ec3c05/page/5W9wF" frameborder="0" style="border:0" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+[![Looker Studio Report](Olist_analytics_report_page-0001.jpg)](https://datastudio.google.com/reporting/4264c807-7ac3-45e6-bcc5-fb50a3ec3c05)
 
 ## REFERENCES
 - [Configure Secrets in Kestra](https://kestra.io/docs/how-to-guides/secrets)
