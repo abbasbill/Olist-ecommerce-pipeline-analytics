@@ -864,7 +864,8 @@ For issues or questions:
 | 6 | Execute workflow | Click **Executions** in Kestra UI |
 | 7 | Monitor logs | View in Kestra UI or `docker compose logs` |
 
-
+## DASHBOARD (LOOKUP STUDIO)
+[Final Dashboard](https://datastudio.google.com/embed/reporting/4264c807-7ac3-45e6-bcc5-fb50a3ec3c05/page/5W9wF)
 ## REFERENCES
 - [Configure Secrets in Kestra](https://kestra.io/docs/how-to-guides/secrets)
 - [Secrets in Kestra – Store Sensitive Values Securely](https://kestra.io/docs/concepts/secret)
